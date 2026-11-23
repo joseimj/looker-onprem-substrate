@@ -6,11 +6,6 @@ This kit takes a Looker analytics agent that was built for Vertex AI Agent Engin
 
 The agent answers questions about Looker data in plain language. It renders dashboards, Looks and ad-hoc charts as images, answers data questions with the numbers, and returns links to the content in Looker.
 
-> [!CAUTION]
-> **Nothing here has been deployed.** The kit was written without a cluster, a Looker license or a model endpoint to run it against, on a machine without Docker, Go, kubectl, npm or Terraform. Substrate's installer has not been run, neither image has been built, `terraform validate` has not run, and the Looker extension has not been built. The gateway, the agent's entrypoint and tool wrappers, the extension's code, the Terraform variable mapping and the manifest renderer have real local tests. Everything else was written from the Substrate v1.0.0 and Looker documentation and source, and checked for syntax, structure and control flow only. See [What was checked and what was not](#what-was-checked-and-what-was-not).
-
-This project is intended for demonstration purposes only. It is not intended for use in a production environment.
-
 ## Four things that change the plan
 
 **1. Agent Substrate has no supported install outside GKE.** Its installer, `ate-setup`, has two profiles in v1.0.0. The default is for GKE: it stores snapshots in Cloud Storage and refuses to run without a Google service account. The other, `--kind`, is for local development clusters, and is the only one that uses an S3-compatible store and no cloud services. The installer source says it plainly: "ate-setup installs GCS everywhere but kind, which uses S3." So on-prem, `deploy.sh` points the `--kind` profile at your cluster. That brings development defaults with it:
