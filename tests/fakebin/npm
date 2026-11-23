@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Fake npm. Records each call with the directory it ran in. "run build" writes
+# a bundle that holds the settings it was built with, so a test can tell which
+# configuration ended up in it. Marker files in $FAKE_STATE make a step fail.
+. "$(dirname "$0")/fake-common.sh"
+{ printf 'npm'; printf ' %s' "$@"; printf ' [in %s]\n' "$(basename "$PWD")"; } >> "$FAKE_LOG"
+fake_check_environment npm
+case "$1 ${2:-}" in
+  "install "*|"ci "*)
+    if [ -e "$FAKE_STATE/npm-install-fails" ]; then echo "npm error network unreachable" >&2; exit 1; fi
+    [ -f package.json ] || { echo "npm error no package.json in $PWD" >&2; exit 1; }
+    [ "$1" = "ci" ] || echo '{"lockfileVersion": 3}' > package-lock.json ;;
+  "test "*)
+    if [ -e "$FAKE_STATE/npm-test-fails" ]; then echo "fail 1" >&2; exit 1; fi ;;
+  "run build")
+    if [ -e "$FAKE_STATE/npm-build-writes-nothing" ]; then exit 0; fi
+    mkdir -p dist; { echo "// fake bundle"; cat src/deployment.js; } > dist/bundle.js ;;
+  *) exit 0 ;;
+esac

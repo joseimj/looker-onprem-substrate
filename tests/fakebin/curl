@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Fake curl for the Looker download service and for the gateway checks.
+. "$(dirname "$0")/fake-common.sh"
+fake_record curl "$@"
+out=""; fmt=""; url=""; stdin_data=""; credentials=""
+for a in "$@"; do case "$a" in http://*|https://*) url="$a" ;; esac; done
+args=("$@"); i=0
+while [ $i -lt ${#args[@]} ]; do
+  case "${args[$i]}" in
+    -o) out="${args[$((i+1))]}"; i=$((i+1)) ;;
+    -w) fmt="${args[$((i+1))]}"; i=$((i+1)) ;;
+    --data) [ "${args[$((i+1))]}" = "@-" ] && stdin_data="$(cat)"; i=$((i+1)) ;;
+    -H) # "-H @-": headers on stdin. deploy.sh sends the gateway credential
+        # that way, as one "Authorization: Basic <base64>" line.
+        if [ "${args[$((i+1))]}" = "@-" ]; then
+          headers="$(cat)"
+          printf '%s\n' "$headers" > "$FAKE_STATE/curl-stdin-headers.txt"
+          case "$headers" in
+            "Authorization: Basic "*) credentials="$(printf '%s' "${headers#Authorization: Basic }" | base64 -d 2>/dev/null)" ;;
+          esac
+        fi
+        i=$((i+1)) ;;
+  esac
+  i=$((i+1))
+done
+emit() { if [ -n "$out" ] && [ "$out" != "/dev/null" ]; then printf '%s' "$1" > "$out"; elif [ -z "$out" ]; then printf '%s' "$1"; fi; }
+case "$url" in
+  https://apidownload.looker.com/download)
+    printf '%s' "$stdin_data" > "$FAKE_STATE/looker-download-request.json"
+    emit "$(printf '{"url":"https://jars.example/looker.jar","depUrl":"https://jars.example/deps.jar","sha256":"%s","depSha256":"%s","version_text":"looker-26.6.12.jar"}' "$(printf 'CORE' | sha256sum | cut -d ' ' -f 1)" "$(printf 'DEPS' | sha256sum | cut -d ' ' -f 1)")" ;;
+  https://jars.example/looker.jar) emit "CORE" ;;
+  https://jars.example/deps.jar) emit "DEPS" ;;
+  */healthz) emit "ok" ;;
+  */readyz) if [ -n "$credentials" ]; then code=200; else code=401; fi; [ -n "$fmt" ] && printf '%s' "$code" ;;
+  */list-apps) # the chat credential is refused, unless a test says the gateway is misconfigured
+    case "$credentials" in
+      looker-chat:*) if [ -e "$FAKE_STATE/chat-not-confined" ]; then code=200; else code=403; fi; [ -n "$fmt" ] && printf '%s' "$code" ;;
+      *) emit '["looker_app"]' ;;
+    esac ;;
+  *) echo "fake curl: unexpected URL $url" >&2; exit 22 ;;
+esac

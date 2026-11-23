@@ -1,0 +1,69 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Copy to terraform.tfvars and edit. variables.tf describes every variable,
+# ../config.env.example every setting behind it.
+#
+# No secret belongs in this file. Export them in the shell instead:
+#   export LOOKER_LICENSE_KEY=...      first apply only, to build and license Looker
+#   export LOOKER_CLIENT_SECRET=...    second apply, once Looker has an API key
+
+# --- On-prem: a cluster you already have ----------------------------------------
+platform     = "onprem"
+kube_context = "my-cluster"
+registry     = "registry.corp.example/looker-agent"
+
+# Read "Four things that change the plan" in ../README.md, then set this.
+onprem_dev_profile_accepted = false
+
+# --- Looker ---------------------------------------------------------------------
+looker_host                    = "looker.corp.example"
+looker_version                 = "26.6"
+looker_technical_contact_email = "ops@corp.example"
+looker_admin_email             = "ops@corp.example"
+
+# Empty for the first apply. Set it once Looker is up and has an API key.
+looker_client_id = ""
+looker_models    = ["thelook"]
+
+# --- Model ----------------------------------------------------------------------
+agent_model_provider = "claude"
+gcp_project_id       = "my-vertex-project"
+gcp_sa_key_file      = "/secure/path/model-caller-key.json"
+
+# --- Security -------------------------------------------------------------------
+# "strict" refuses to deploy while a known-weak choice is configured, and says
+# which. It needs, among other things: your own S3-compatible snapshot store,
+# every image given by digest, and internal_tls = "private-ca".
+security_mode = "standard"
+internal_tls  = "off"
+
+# Where Looker may connect to: your databases, Git, mail.
+looker_egress_cidrs = ["0.0.0.0/0"]
+
+# snapshot_store  = "s3"
+# s3_endpoint_url = "https://s3.corp.example"
+# s3_bucket       = "substrate-snapshots"
+
+# --- Review before deploying ----------------------------------------------------
+# true writes every manifest to ../.work/rendered and touches nothing.
+render_only = false
+
+# --- GKE instead ----------------------------------------------------------------
+# platform             = "gke"
+# registry             = "us-central1-docker.pkg.dev/my-project/looker-agent"
+# gcp_project_id       = "my-project"
+# gcp_region           = "us-central1"
+# gke_cluster_name     = "looker-agent"
+# gke_cluster_location = "us-central1-a"

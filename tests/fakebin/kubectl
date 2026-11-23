@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Fake kubectl. Records every call; answers from files in $FAKE_STATE.
+#
+# Secrets are kept the way the real one keeps them, as JSON with base64
+# values, in $FAKE_STATE/secret-<namespace>-<name>. deploy.sh reads them back
+# (to compare, and for the gateway checks), so the stub has to hold the values.
+. "$(dirname "$0")/fake-common.sh"
+fake_record kubectl "$@"
+clean=(); while [ $# -gt 0 ]; do case "$1" in --context|--kubeconfig) shift 2; continue ;; --context=*|--kubeconfig=*) shift; continue ;; esac; clean+=("$1"); shift; done
+set -- "${clean[@]}"
+[ "${1:-}" = "ate" ] && { shift; exec "$(dirname "$0")/fake-ate" "$@"; }
+ns=""; if [ "${1:-}" = "-n" ]; then ns="$2"; shift 2; fi
+
+secret_file() { printf '%s/secret-%s-%s' "$FAKE_STATE" "$1" "$2"; }
+
+# The Secret "create secret generic NAME --from-file=..." or "create secret tls NAME --cert=... --key=..." describes.
+secret_manifest() {
+  local kind="$1" name="$2" data='{}' arg pair key path stype="Opaque"
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+      --from-file=*)
+        pair="${arg#--from-file=}"; key="${pair%%=*}"; path="${pair#*=}"
+        data="$(jq -c --arg k "$key" --arg v "$(base64 < "$path" | tr -d '\n')" '. + {($k): $v}' <<< "$data")" ;;
+      --cert=*)
+        path="${arg#--cert=}"; stype="kubernetes.io/tls"
+        data="$(jq -c --arg v "$(base64 < "$path" | tr -d '\n')" '. + {"tls.crt": $v}' <<< "$data")" ;;
+      --key=*)
+        path="${arg#--key=}"; stype="kubernetes.io/tls"
+        data="$(jq -c --arg v "$(base64 < "$path" | tr -d '\n')" '. + {"tls.key": $v}' <<< "$data")" ;;
+    esac
+  done
+  if [ "$kind" = "tls" ]; then stype="kubernetes.io/tls"; fi
+  jq -cn --arg n "$name" --arg ns "$ns" --arg t "$stype" --argjson d "$data" \
+    '{apiVersion: "v1", kind: "Secret", type: $t, metadata: {name: $n, namespace: $ns}, data: $d}'
+}
+
+# What a manifest holds that later calls ask about: namespaces with their Pod
+# Security level, and the gateway's code ConfigMaps (the immutable ones).
+remember_objects() {
+  awk -v state="$FAKE_STATE" '
+    /^---/ { kind = ""; name = ""; ns = "" }
+    /^kind: / { kind = $2 }
+    /^  name: / && name == "" { name = $2 }
+    /^  namespace: / && ns == "" { ns = $2 }
+    /^    pod-security.kubernetes.io\/enforce: / && kind == "Namespace" { file = state "/ns-" name; print $2 > file; close(file) }
+    /^immutable: true/ && kind == "ConfigMap" { system("mkdir -p " state "/configmaps/" ns); file = state "/configmaps/" ns "/" name; print name > file; close(file) }
+  ' "$1"
+}
+
+case "${1:-}" in
+  version) echo "Client Version: v1.37.0" ;;
+  auth) exit 0 ;;
+  api-resources) printf '%s\n' certificatesigningrequests.certificates.k8s.io clustertrustbundles.certificates.k8s.io podcertificaterequests.certificates.k8s.io ;;
+  get)
+    case "$2" in
+      storageclass) echo '{"items":[{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}]}' ;;
+      namespace) [ -e "$FAKE_STATE/ns-$3" ] ;;
+      deployment) [ -e "$FAKE_STATE/deployment-$ns-$3" ] ;;
+      pod)
+        if [ "$3" = "netpol-server" ]; then
+          echo "10.0.0.2"
+        elif [ "$3" = "netpol-client" ]; then
+          if [ -e "$FAKE_STATE/netpol-not-enforced" ]; then echo "0"; else echo "1"; fi
+        fi ;;
+      configmap)
+        case " $* " in
+          *" -l "*) # the gateway's code ConfigMaps, by label
+            for file in "$FAKE_STATE/configmaps/$ns/"*; do
+              [ -e "$file" ] && echo "configmap/$(cat "$file")"
+            done
+            exit 0 ;;
+          *) printf 'policies: []\n' ;;
+        esac ;;
+      secret)
+        file="$(secret_file "$ns" "$3")"
+        [ -e "$file" ] || exit 1
+        key=""
+        for arg in "$@"; do
+          case "$arg" in jsonpath=\{.data.*\}) key="${arg#jsonpath=\{.data.}"; key="${key%\}}"; key="${key//\\./.}" ;; esac
+        done
+        if [ -n "$key" ]; then
+          # The model credential: once the refresher runs, it holds a real token.
+          if [ "$key" = "token" ] && [ -e "$FAKE_STATE/refresher-applied" ]; then
+            printf '%0200d' 0
+          else
+            jq -r --arg k "$key" '.data[$k] // empty' "$file"
+          fi
+        else
+          case " $* " in *" -o json "*) cat "$file" ;; esac
+        fi ;;
+    esac ;;
+  create)
+    case "$2" in
+      namespace) echo privileged > "$FAKE_STATE/ns-$3" ;;
+      secret) # "create secret generic|tls NAME ..."; with --dry-run it only prints
+        manifest="$(secret_manifest "$3" "$4" "$@")"
+        case " $* " in
+          *" --dry-run=client "*) printf '%s\n' "$manifest" ;;
+          *) file="$(secret_file "$ns" "$4")"
+             [ -e "$file" ] && { echo "Error from server (AlreadyExists): secrets \"$4\" already exists" >&2; exit 1; }
+             printf '%s\n' "$manifest" > "$file"
+             echo "created $ns/$4" >> "$FAKE_STATE/secrets.log" ;;
+        esac ;;
+      configmap) echo "CONFIGMAP $ns/$3" ;;
+      -f) # "create -f -": a Secret on stdin
+        manifest="$(cat)"; name="$(jq -r '.metadata.name' <<< "$manifest")"; file="$(secret_file "$ns" "$name")"
+        [ -e "$file" ] && { echo "Error from server (AlreadyExists): secrets \"$name\" already exists" >&2; exit 1; }
+        printf '%s\n' "$manifest" > "$file"
+        echo "created $ns/$name" >> "$FAKE_STATE/secrets.log" ;;
+    esac ;;
+  replace) # "replace -f -": a Secret on stdin, which has to exist
+    manifest="$(cat)"; name="$(jq -r '.metadata.name' <<< "$manifest")"; file="$(secret_file "$ns" "$name")"
+    [ -e "$file" ] || { echo "Error from server (NotFound): secrets \"$name\" not found" >&2; exit 1; }
+    printf '%s\n' "$manifest" > "$file"
+    echo "replaced $ns/$name" >> "$FAKE_STATE/secrets.log" ;;
+  apply)
+    if [ "$3" = "-" ]; then
+      content="$(cat)"; echo "$content" >> "$FAKE_STATE/applied-stdin.log"
+      printf '%s\n' "$content" > "$FAKE_STATE/stdin-manifest.tmp"
+      remember_objects "$FAKE_STATE/stdin-manifest.tmp"; rm -f "$FAKE_STATE/stdin-manifest.tmp"
+    else
+      cp "$3" "$FAKE_STATE/applied-$(basename "$3")"
+      remember_objects "$3"
+      if [ "$(basename "$3")" = "token-refresher.yaml" ]; then : > "$FAKE_STATE/refresher-applied"; fi
+    fi ;;
+  delete)
+    case "$2" in
+      configmap/*) rm -f "$FAKE_STATE/configmaps/$ns/${2#configmap/}" ;;
+    esac ;;
+  patch) echo "PATCH $ns $2 $3" >> "$FAKE_STATE/patches.log" ;;
+  port-forward) sleep 20 ;;
+  *) exit 0 ;;
+esac

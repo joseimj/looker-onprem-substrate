@@ -1,0 +1,31 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The exact set of packages for the agent image, with hashes. Optional.
+#
+# While this file holds comments only, the image build installs
+# requirements.txt, at whatever versions are current. Once it names packages,
+# the build installs exactly these and nothing else (pip --require-hashes):
+# every package pinned with "==", every file checked against its hash, the
+# packages those packages need included.
+#
+# One way to write it is pip-tools, which is not part of this kit. Run it with
+# the Python version of the base image (3.12), from this directory:
+#
+#   pip-compile --generate-hashes --output-file requirements.lock requirements.txt
+#
+# pip-compile overwrites the file, these comments included. Lines look like:
+#
+#   google-adk==<version> \
+#       --hash=sha256:<hash of each file of that version>

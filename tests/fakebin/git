@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Fake git. "fetch" notes which ref was asked for, and "rev-parse HEAD" then
+# says which commit that is: a full commit id is itself; a tag is the commit
+# in $FAKE_STATE/tag-commit (a test writes one there to play a moved tag), or
+# else the commit deploy.sh expects of Substrate v1.0.0.
+. "$(dirname "$0")/fake-common.sh"
+fake_record git "$@"
+dir="."
+if [ "${1:-}" = "-C" ]; then dir="$2"; shift 2; fi
+case "${1:-}" in
+  init) mkdir -p "${@: -1}" ;;
+  fetch) printf '%s' "${@: -1}" > "$dir/.fake-fetched-ref" ;;
+  rev-parse)
+    ref="$(cat "$dir/.fake-fetched-ref" 2>/dev/null || true)"
+    if printf '%s' "$ref" | grep -Eq '^[0-9a-f]{40}$'; then
+      echo "$ref"
+    elif [ -e "$FAKE_STATE/tag-commit" ]; then
+      cat "$FAKE_STATE/tag-commit"
+    else
+      echo "b34fbee742906494b5eb4f1f36987176bf8770a4"
+    fi ;;
+esac
+exit 0

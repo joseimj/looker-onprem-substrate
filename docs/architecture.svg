@@ -1,0 +1,243 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1250" viewBox="0 0 1720 1250" font-family="Arial, Helvetica, 'Liberation Sans', sans-serif" role="img" aria-labelledby="title desc">
+<title id="title">Architecture of the Looker agent on Agent Substrate</title>
+<desc id="desc">A business user reaches Looker over HTTPS. Looker's server calls the agent gateway with a chat credential. The gateway calls the Substrate ingress router over mutual TLS, which reaches the agent in a gVisor sandbox. The agent can only reach the Looker API and the model endpoint, both through the Substrate egress gateway, which adds the model credential.</desc>
+<defs><marker id="head-174ea6" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#174ea6"/></marker><marker id="head-b06000" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b06000"/></marker><marker id="head-5f6368" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/></marker></defs>
+<rect width="1720" height="1250" fill="#ffffff"/>
+<text x="40" y="44" font-size="24" font-weight="bold" fill="#202124" text-anchor="start">Looker agent on Agent Substrate</text>
+<text x="40" y="68" font-size="13.5" font-weight="normal" fill="#3c4043" text-anchor="start">Customer-hosted Looker, the agent in a sandbox, and the only paths in and out. Kubernetes you operate: on-prem or GKE.</text>
+<rect x="1150" y="34" width="16" height="16" rx="3" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+<text x="1173" y="47" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Looker</text>
+<rect x="1232" y="34" width="16" height="16" rx="3" fill="#e6f4ea" stroke="#188038" stroke-width="1.5"/>
+<text x="1255" y="47" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">This kit</text>
+<rect x="1320" y="34" width="16" height="16" rx="3" fill="#f3e8fd" stroke="#8430ce" stroke-width="1.5"/>
+<text x="1343" y="47" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Agent Substrate</text>
+<rect x="1456" y="34" width="16" height="16" rx="3" fill="#fef7e0" stroke="#e37400" stroke-width="1.5"/>
+<text x="1479" y="47" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Outside the cluster</text>
+<text x="40" y="108" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">PEOPLE</text>
+<rect x="40" y="150" width="250" height="118" rx="8" fill="#f1f3f4" stroke="#5f6368" stroke-width="1.5"/>
+<text x="52" y="172" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Business user</text>
+<text x="52" y="191" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Browser, signed in to Looker.</text>
+<text x="52" y="207" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">The chat is a Looker extension</text>
+<text x="52" y="223" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">in a sandboxed frame. It holds</text>
+<text x="52" y="239" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">no gateway credential.</text>
+<rect x="40" y="372" width="250" height="100" rx="8" fill="#f1f3f4" stroke="#5f6368" stroke-width="1.5"/>
+<text x="52" y="394" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Administrator</text>
+<text x="52" y="413" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">kubectl port-forward to the</text>
+<text x="52" y="429" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">gateway, with the administrator</text>
+<text x="52" y="445" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">credential: ADK developer UI.</text>
+<rect x="40" y="572" width="250" height="100" rx="8" fill="#f1f3f4" stroke="#5f6368" stroke-width="1.5"/>
+<text x="52" y="594" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Operator</text>
+<text x="52" y="613" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">terraform apply, or deploy.sh.</text>
+<text x="52" y="629" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Builds the images, installs</text>
+<text x="52" y="645" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Substrate, applies the manifests.</text>
+<rect x="330" y="88" width="990" height="930" rx="14" fill="#fafafa" stroke="#3c4043" stroke-width="2"/>
+<text x="346" y="108" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">KUBERNETES CLUSTER</text>
+<text x="1304" y="108" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="end" font-style="italic">trust boundary</text>
+<rect x="350" y="120" width="950" height="178" rx="10" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="362" y="138" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">namespace looker</text>
+<text x="1288" y="138" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="end" font-style="italic">baseline pod security, default deny</text>
+<rect x="370" y="148" width="630" height="132" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+<text x="382" y="170" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Looker (customer-hosted)</text>
+<text x="382" y="189" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Web UI and API over HTTPS. Its server makes the chat's calls to the gateway</text>
+<text x="382" y="205" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">and adds the chat credential from a hidden user attribute.</text>
+<text x="382" y="221" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Non-root, no privilege escalation, no capabilities, no cluster token.</text>
+<text x="382" y="237" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Its API port accepts the Substrate egress gateway only.</text>
+<rect x="1040" y="192" width="240" height="88" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+<text x="1052" y="214" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">MySQL</text>
+<text x="1052" y="233" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Looker's own database.</text>
+<text x="1052" y="249" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">TLS required. Looker only.</text>
+<text x="1052" y="265" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">No outbound connections.</text>
+<rect x="350" y="320" width="440" height="168" rx="10" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="362" y="338" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">namespace looker-agent-gateway</text>
+<text x="778" y="338" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="end" font-style="italic">restricted, default deny</text>
+<rect x="370" y="350" width="400" height="120" rx="8" fill="#e6f4ea" stroke="#188038" stroke-width="1.5"/>
+<text x="382" y="372" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Agent gateway</text>
+<text x="382" y="391" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Authenticates every caller, and will not start</text>
+<text x="382" y="407" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">without credentials. The chat credential may</text>
+<text x="382" y="423" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">send only the chat's exact requests. Limits on</text>
+<text x="382" y="439" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">connections, sizes and time.</text>
+<rect x="1040" y="320" width="260" height="168" rx="10" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="1052" y="338" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">namespace looker-agent-creds</text>
+<text x="1052" y="352" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="start" font-style="italic">restricted, default deny</text>
+<rect x="1056" y="360" width="228" height="54" rx="8" fill="#e6f4ea" stroke="#188038" stroke-width="1.5"/>
+<text x="1068" y="382" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Token refresher</text>
+<text x="1068" y="401" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Mints short-lived tokens.</text>
+<rect x="1056" y="424" width="228" height="54" rx="8" fill="#e6f4ea" stroke="#188038" stroke-width="1.5"/>
+<text x="1068" y="446" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Secret: model token</text>
+<text x="1068" y="465" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Read by Substrate only.</text>
+<rect x="350" y="510" width="950" height="186" rx="10" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="362" y="528" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">namespace ate-system</text>
+<text x="1288" y="528" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="end" font-style="italic">Agent Substrate</text>
+<rect x="370" y="540" width="270" height="138" rx="8" fill="#f3e8fd" stroke="#8430ce" stroke-width="1.5"/>
+<text x="382" y="562" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Ingress router</text>
+<text x="382" y="581" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Mutual TLS only.</text>
+<text x="382" y="597" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Admits the identities on its</text>
+<text x="382" y="613" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">allowlist: the gateway.</text>
+<text x="382" y="629" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Wakes a suspended agent.</text>
+<rect x="670" y="540" width="230" height="138" rx="8" fill="#f3e8fd" stroke="#8430ce" stroke-width="1.5"/>
+<text x="682" y="562" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Control plane</text>
+<text x="682" y="581" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">API server, controller,</text>
+<text x="682" y="597" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">credential provider,</text>
+<text x="682" y="613" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">snapshots of the agent.</text>
+<rect x="930" y="540" width="350" height="138" rx="8" fill="#f3e8fd" stroke="#8430ce" stroke-width="1.5"/>
+<text x="942" y="562" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Egress gateway</text>
+<text x="942" y="581" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">The agent's only way out.</text>
+<text x="942" y="597" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Allowlist by host name: other names do not</text>
+<text x="942" y="613" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">even resolve inside the sandbox.</text>
+<text x="942" y="629" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Swaps the placeholder for the model credential.</text>
+<rect x="350" y="718" width="950" height="282" rx="10" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="362" y="736" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">namespace looker-agent</text>
+<text x="1288" y="736" font-size="11" font-weight="normal" fill="#5f6368" text-anchor="end" font-style="italic">sandbox workers, privileged</text>
+<rect x="370" y="748" width="640" height="236" rx="8" fill="#fce8e6" stroke="#c5221f" stroke-width="1.5"/>
+<text x="382" y="770" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Worker pod</text>
+<text x="998" y="770" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="end">privileged, as Substrate requires</text>
+<rect x="392" y="786" width="596" height="182" rx="8" fill="#ffffff" stroke="#137333" stroke-width="3"/>
+<text x="404" y="808" font-size="14" font-weight="bold" fill="#137333" text-anchor="start">gVisor sandbox</text>
+<text x="976" y="808" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="end">no network of its own</text>
+<rect x="414" y="824" width="552" height="128" rx="8" fill="#e6f4ea" stroke="#188038" stroke-width="1.5"/>
+<text x="426" y="846" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Looker agent (ADK)</text>
+<text x="426" y="865" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Renders dashboards as images, answers data questions, returns links.</text>
+<text x="426" y="881" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Holds the Looker API key of one least-privilege Looker user, and a</text>
+<text x="426" y="897" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">placeholder where the model credential belongs.</text>
+<text x="426" y="913" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">May query only the LookML models it is configured for.</text>
+<rect x="1100" y="760" width="180" height="116" rx="8" fill="#ffffff" stroke="#9aa0a6" stroke-width="1.5"/>
+<text x="1112" y="782" font-size="13" font-weight="bold" fill="#202124" text-anchor="start">Not in the sandbox</text>
+<text x="1112" y="801" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">The model credential.</text>
+<text x="1112" y="817" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Cluster credentials.</text>
+<text x="1112" y="833" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Any route that is not</text>
+<text x="1112" y="849" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">on the egress allowlist.</text>
+<text x="1360" y="108" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">OUTSIDE THE CLUSTER</text>
+<rect x="1360" y="132" width="320" height="84" rx="8" fill="#fef7e0" stroke="#e37400" stroke-width="1.5"/>
+<text x="1372" y="154" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Your data warehouses</text>
+<text x="1372" y="173" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Queried by Looker with the connections</text>
+<text x="1372" y="189" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">you configure in Looker.</text>
+<rect x="1360" y="346" width="320" height="76" rx="8" fill="#fef7e0" stroke="#e37400" stroke-width="1.5"/>
+<text x="1372" y="368" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Google token endpoint</text>
+<text x="1372" y="387" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Vertex AI only. On GKE: Workload Identity.</text>
+<rect x="1360" y="566" width="320" height="92" rx="8" fill="#fef7e0" stroke="#e37400" stroke-width="1.5"/>
+<text x="1372" y="588" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Model endpoint</text>
+<text x="1372" y="607" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Vertex AI (Gemini or Claude),</text>
+<text x="1372" y="623" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">or the Anthropic API.</text>
+<rect x="1360" y="760" width="320" height="116" rx="8" fill="#fef7e0" stroke="#e37400" stroke-width="1.5"/>
+<text x="1372" y="782" font-size="14" font-weight="bold" fill="#202124" text-anchor="start">Registry and object store</text>
+<text x="1372" y="801" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">The agent image is pulled by digest.</text>
+<text x="1372" y="817" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">Snapshots of the agent, which include</text>
+<text x="1372" y="833" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">the Looker API key, go to an object</text>
+<text x="1372" y="849" font-size="12" font-weight="normal" fill="#3c4043" text-anchor="start">store: use your own (S3-compatible).</text>
+<path d="M 290,209 L 366,209" fill="none" stroke="#174ea6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-174ea6)"/>
+<circle cx="328" cy="209" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="328" y="213.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+<text x="296" y="190" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">HTTPS</text>
+<path d="M 610,280 L 610,346" fill="none" stroke="#174ea6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-174ea6)"/>
+<circle cx="610" cy="306" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="610" y="310.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+<text x="628" y="302" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">chat credential, added by Looker's</text>
+<text x="628" y="316" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">server; TLS with INTERNAL_TLS</text>
+<path d="M 610,470 L 610,536" fill="none" stroke="#174ea6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-174ea6)"/>
+<circle cx="610" cy="498" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="610" y="502.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+<text x="628" y="494" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">mutual TLS,</text>
+<text x="628" y="508" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">the gateway's pod certificate</text>
+<path d="M 610,678 L 610,820" fill="none" stroke="#174ea6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-174ea6)"/>
+<circle cx="610" cy="708" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="610" y="712.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<text x="628" y="712" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">to the one agent</text>
+<text x="628" y="726" font-size="11.5" font-weight="normal" fill="#174ea6" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">the gateway names</text>
+<path d="M 966,888 L 1060,888 L 1060,682" fill="none" stroke="#b06000" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-b06000)"/>
+<circle cx="1060" cy="722" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="1060" y="726.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+<text x="1076" y="726" font-size="11.5" font-weight="normal" fill="#b06000" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">all outbound traffic</text>
+<path d="M 960,540 L 960,284" fill="none" stroke="#b06000" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-b06000)"/>
+<circle cx="960" cy="504" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="960" y="508.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">6</text>
+<text x="946" y="392" font-size="11.5" font-weight="normal" fill="#b06000" text-anchor="end" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Looker API,</text>
+<text x="946" y="406" font-size="11.5" font-weight="normal" fill="#b06000" text-anchor="end" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">TLS passed through,</text>
+<text x="946" y="420" font-size="11.5" font-weight="normal" fill="#b06000" text-anchor="end" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">the agent's own API key</text>
+<path d="M 1280,612 L 1356,612" fill="none" stroke="#b06000" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#head-b06000)"/>
+<circle cx="1318" cy="612" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="1318" y="616.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">7</text>
+<text x="1290" y="592" font-size="11.5" font-weight="normal" fill="#b06000" text-anchor="start" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">TLS</text>
+<path d="M 1284,387 L 1356,387" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<path d="M 1170,478 L 1170,536" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<circle cx="1170" cy="504" r="11" fill="#5f6368" stroke="#ffffff" stroke-width="2"/>
+<text x="1170" y="508.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">8</text>
+<path d="M 1000,170 L 1356,170" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<path d="M 290,422 L 366,422" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<path d="M 290,622 L 326,622" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<path d="M 1320,818 L 1356,818" fill="none" stroke="#5f6368" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#head-5f6368)"/>
+<rect x="40" y="1040" width="800" height="190" rx="10" fill="#ffffff" stroke="#dadce0" stroke-width="1.2"/>
+<text x="56" y="1064" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">THE PATHS</text>
+<circle cx="67" cy="1088" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="67" y="1092.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+<text x="88" y="1092" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">User to Looker</text>
+<text x="88" y="1107" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">HTTPS and Looker's own sign-in.</text>
+<circle cx="67" cy="1122" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="67" y="1126.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+<text x="88" y="1126" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Looker to the gateway</text>
+<text x="88" y="1141" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Looker's server adds the chat credential.</text>
+<circle cx="67" cy="1156" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="67" y="1160.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+<text x="88" y="1160" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Gateway to the router</text>
+<text x="88" y="1175" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Mutual TLS. The gateway, not the caller, names the agent.</text>
+<circle cx="67" cy="1190" r="11" fill="#174ea6" stroke="#ffffff" stroke-width="2"/>
+<text x="67" y="1194.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<text x="88" y="1194" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Router to the agent</text>
+<text x="88" y="1209" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Only identities on the router's allowlist get this far.</text>
+<circle cx="481" cy="1088" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="481" y="1092.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+<text x="502" y="1092" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Agent to the egress gateway</text>
+<text x="502" y="1107" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Nothing else is routable.</text>
+<circle cx="481" cy="1122" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="481" y="1126.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">6</text>
+<text x="502" y="1126" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">To the Looker API</text>
+<text x="502" y="1141" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">One Looker identity for every user.</text>
+<circle cx="481" cy="1156" r="11" fill="#b06000" stroke="#ffffff" stroke-width="2"/>
+<text x="481" y="1160.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">7</text>
+<text x="502" y="1160" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">To the model</text>
+<text x="502" y="1175" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">The real credential is added here.</text>
+<circle cx="481" cy="1190" r="11" fill="#5f6368" stroke="#ffffff" stroke-width="2"/>
+<text x="481" y="1194.2" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">8</text>
+<text x="502" y="1194" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Model credential</text>
+<text x="502" y="1209" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Minted outside the sandbox, short-lived.</text>
+<rect x="860" y="1040" width="820" height="190" rx="10" fill="#ffffff" stroke="#dadce0" stroke-width="1.2"/>
+<text x="876" y="1064" font-size="11.5" font-weight="bold" fill="#5f6368" text-anchor="start">WHAT HOLDS IT TOGETHER</text>
+<path d="M 876,1083 l 7,-3 l 7,3 v 6 c 0,5 -3.5,8 -7,9.5 c -3.5,-1.5 -7,-4.5 -7,-9.5 z" fill="#188038"/>
+<path d="M 879.6,1089.3 l 2.6,2.7 l 4.4,-5" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="900" y="1094" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Network policies</text>
+<text x="900" y="1109" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Default deny in the kit's namespaces; only these paths are open.</text>
+<path d="M 876,1117 l 7,-3 l 7,3 v 6 c 0,5 -3.5,8 -7,9.5 c -3.5,-1.5 -7,-4.5 -7,-9.5 z" fill="#188038"/>
+<path d="M 879.6,1123.3 l 2.6,2.7 l 4.4,-5" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="900" y="1128" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Pod security</text>
+<text x="900" y="1143" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Non-root, no privilege escalation, capabilities dropped.</text>
+<path d="M 876,1151 l 7,-3 l 7,3 v 6 c 0,5 -3.5,8 -7,9.5 c -3.5,-1.5 -7,-4.5 -7,-9.5 z" fill="#188038"/>
+<path d="M 879.6,1157.3 l 2.6,2.7 l 4.4,-5" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="900" y="1162" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Secrets</text>
+<text x="900" y="1177" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Generated at install. Never on a command line or in Terraform state.</text>
+<path d="M 876,1185 l 7,-3 l 7,3 v 6 c 0,5 -3.5,8 -7,9.5 c -3.5,-1.5 -7,-4.5 -7,-9.5 z" fill="#188038"/>
+<path d="M 879.6,1191.3 l 2.6,2.7 l 4.4,-5" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="900" y="1196" font-size="12.5" font-weight="bold" fill="#202124" text-anchor="start">Supply chain</text>
+<text x="900" y="1211" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Substrate pinned to a commit, the agent image to a digest.</text>
+<text x="1300" y="1064" font-size="11.5" font-weight="bold" fill="#c5221f" text-anchor="start">KNOW BEFORE YOU RELY ON IT</text>
+<text x="1300" y="1090" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">The agent answers with one Looker identity:</text>
+<text x="1300" y="1106" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">every chat user sees what that identity can see.</text>
+<text x="1300" y="1122" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start"></text>
+<text x="1300" y="1138" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Worker pods are privileged. The sandbox, not the</text>
+<text x="1300" y="1154" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">pod, is what contains the agent.</text>
+<text x="1300" y="1170" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start"></text>
+<text x="1300" y="1186" font-size="11.5" font-weight="normal" fill="#3c4043" text-anchor="start">Nothing here has been deployed yet.</text>
+</svg>
