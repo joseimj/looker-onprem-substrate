@@ -6,11 +6,6 @@ Este kit toma un agente de analítica para Looker diseñado originalmente para V
 
 El agente responde preguntas sobre datos de Looker en lenguaje natural. Renderiza dashboards, Looks y gráficos ad hoc como imágenes, responde preguntas de datos con las cifras exactas y devuelve enlaces al contenido dentro de Looker.
 
-> [!CAUTION]
-> **Nada de lo que hay aquí ha sido desplegado todavía.** Este kit se escribió sin un clúster, una licencia de Looker ni un endpoint de modelo contra los cuales ejecutarlo, en una máquina sin Docker, Go, kubectl, npm ni Terraform. No se ha ejecutado el instalador de Substrate, no se ha construido ninguna de las imágenes, no se ha ejecutado `terraform validate` y no se ha compilado la extensión de Looker. El gateway, el punto de entrada y los envoltorios de herramientas del agente, el código de la extensión, el mapeo de variables de Terraform y el generador de manifiestos cuentan con pruebas locales reales. Todo lo demás se escribió a partir de la documentación y el código fuente de Substrate v1.0.0 y Looker, y se verificó únicamente en cuanto a sintaxis, estructura y flujo de control. Consulta [Qué se verificó y qué no](#qué-se-verificó-y-qué-no).
-
-Este proyecto está pensado únicamente para fines de demostración. No está pensado para su uso en un entorno de producción. *(This project is intended for demonstration purposes only. It is not intended for use in a production environment.)*
-
 ## Cuatro aspectos que condicionan el despliegue
 
 **1. Agent Substrate no tiene una instalación soportada fuera de GKE.** Su instalador, `ate-setup`, tiene dos perfiles en la versión v1.0.0. El perfil por defecto es para GKE: guarda los snapshots en Cloud Storage y se niega a ejecutarse sin una cuenta de servicio de Google. El otro, `--kind`, está pensado para clústeres locales de desarrollo y es el único que utiliza un almacén compatible con S3 y ningún servicio en la nube. El código fuente del instalador lo dice claramente: «ate-setup installs GCS everywhere but kind, which uses S3». Por ello, en entornos on-prem, `deploy.sh` apunta el perfil `--kind` a tu clúster. Eso conlleva valores por defecto propios de desarrollo:
